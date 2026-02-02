@@ -1,0 +1,240 @@
+################################################################################
+# FINAL PROJECT: HBASE COMMANDS
+# Description:
+#   Complete HBase setup, schema creation, and data insertion for the final
+#   project. Includes Docker access, table creation, schema evolution,
+#   and sample operational + analytical data.
+################################################################################
+
+
+################################################################################
+# 1. DOCKER: VERIFY RUNNING CONTAINER
+################################################################################
+
+# List running containers and confirm HBase container name
+docker ps
+
+# Expected container name:
+# hbase-standalone
+
+
+################################################################################
+# 2. ACCESS HBASE CONTAINER
+################################################################################
+
+# Incorrect container name (documented for learning purposes)
+docker exec -it hbase bash
+# Error: No such container
+
+# Correct container access
+docker exec -it hbase-standalone bash
+
+
+################################################################################
+# 3. START HBASE SHELL
+################################################################################
+
+hbase shell
+
+# NOTE:
+# Warning about native-hadoop library is expected in Docker environments
+# and does not affect functionality.
+
+
+################################################################################
+# 4. USERS TABLE (User Profiles)
+################################################################################
+
+# Insert user profiles
+put 'users', 'user_000042', 'profile:city', 'North Michaelville'
+put 'users', 'user_000042', 'profile:state', 'WY'
+put 'users', 'user_000042', 'profile:country', 'US'
+put 'users', 'user_000042', 'profile:registration_date', '2024-12-15T08:42:13'
+put 'users', 'user_000042', 'profile:last_active', '2025-03-12T16:23:47'
+
+put 'users', 'user_000173', 'profile:city', 'East Angela'
+put 'users', 'user_000173', 'profile:state', 'MN'
+put 'users', 'user_000173', 'profile:country', 'US'
+put 'users', 'user_000173', 'profile:registration_date', '2024-11-30T14:27:56'
+put 'users', 'user_000173', 'profile:last_active', '2025-04-02T09:15:32'
+
+# Verify users
+get 'users', 'user_000173'
+get 'users', 'user_000042'
+
+
+################################################################################
+# 5. PRODUCTS TABLE (INITIAL VERSION)
+################################################################################
+
+# Initial creation (later improved)
+create 'products', 'meta', 'pricing', 'inventory'
+
+# Verify existing tables
+list
+
+
+################################################################################
+# 6. REMOVE UNUSED TABLE
+################################################################################
+
+disable 'students'
+drop 'students'
+
+
+################################################################################
+# 7. PRODUCTS DATA (INITIAL SCHEMA)
+################################################################################
+
+put 'products', 'prod_00001', 'meta:name', 'Wireless Mouse'
+put 'products', 'prod_00001', 'meta:category_id', 'cat_001'
+put 'products', 'prod_00001', 'meta:is_active', 'true'
+put 'products', 'prod_00001', 'meta:creation_date', '2024-10-01T09:00:00'
+put 'products', 'prod_00001', 'pricing:base_price', '25.99'
+put 'products', 'prod_00001', 'inventory:current_stock', '150'
+
+put 'products', 'prod_00002', 'meta:name', 'Mechanical Keyboard'
+put 'products', 'prod_00002', 'meta:category_id', 'cat_002'
+put 'products', 'prod_00002', 'meta:is_active', 'true'
+put 'products', 'prod_00002', 'meta:creation_date', '2024-11-15T12:30:00'
+put 'products', 'prod_00002', 'pricing:base_price', '89.50'
+put 'products', 'prod_00002', 'inventory:current_stock', '80'
+
+
+################################################################################
+# 8. PRODUCTS TABLE (SCHEMA EVOLUTION)
+################################################################################
+
+# Drop old schema
+disable 'products'
+drop 'products'
+
+# Recreate with improved column families
+create 'products',
+  { NAME => 'info' },
+  { NAME => 'pricing' },
+  { NAME => 'inventory' }
+
+describe 'products'
+
+
+################################################################################
+# 9. PRODUCTS DATA (FINAL SCHEMA)
+################################################################################
+
+put 'products', 'prod_00001', 'info:name', 'Wireless Mouse'
+put 'products', 'prod_00001', 'info:category_id', 'cat_002'
+put 'products', 'prod_00001', 'info:creation_date', '2024-01-12T09:30:00'
+
+put 'products', 'prod_00001', 'pricing:base_price', '120.50'
+put 'products', 'prod_00001', 'pricing:price_history',
+'[{"price":120.50,"date":"2024-01-12T09:30:00"}]'
+
+put 'products', 'prod_00001', 'inventory:current_stock', '340'
+put 'products', 'prod_00001', 'inventory:is_active', 'true'
+
+get 'products', 'prod_00001'
+
+
+################################################################################
+# 10. CATEGORIES TABLE
+################################################################################
+
+create 'categories',
+  { NAME => 'info' },
+  { NAME => 'subcategories' }
+
+put 'categories', 'cat_002', 'info:name', 'Electronics'
+put 'categories', 'cat_002', 'subcategories:sub_002_01',
+'{"name":"Accessories","profit_margin":0.25}'
+
+get 'categories', 'cat_002'
+
+
+################################################################################
+# 11. SESSIONS TABLE (USER ACTIVITY TRACKING)
+################################################################################
+
+create 'sessions',
+  { NAME => 'meta' },
+  { NAME => 'geo' },
+  { NAME => 'device' },
+  { NAME => 'activity' }
+
+describe 'sessions'
+
+put 'sessions', 'sess_a7b3c9d8e2', 'meta:user_id', 'user_000042'
+put 'sessions', 'sess_a7b3c9d8e2', 'meta:start_time', '2025-03-12T14:37:22'
+put 'sessions', 'sess_a7b3c9d8e2', 'meta:end_time', '2025-03-12T14:52:41'
+put 'sessions', 'sess_a7b3c9d8e2', 'meta:duration_seconds', '919'
+put 'sessions', 'sess_a7b3c9d8e2', 'meta:conversion_status', 'converted'
+put 'sessions', 'sess_a7b3c9d8e2', 'meta:referrer', 'search_engine'
+
+put 'sessions', 'sess_a7b3c9d8e2', 'geo:data',
+'{"city":"North Michaelville","state":"WY","country":"US","ip_address":"172.24.78.193"}'
+
+put 'sessions', 'sess_a7b3c9d8e2', 'device:profile',
+'{"type":"mobile","os":"iOS","browser":"Safari"}'
+
+put 'sessions', 'sess_a7b3c9d8e2', 'activity:viewed_products',
+'["prod_00123","prod_02456","prod_01872"]'
+
+put 'sessions', 'sess_a7b3c9d8e2', 'activity:page_views',
+'[{"timestamp":"2025-03-12T14:37:22","page_type":"home","view_duration":42},
+  {"timestamp":"2025-03-12T14:38:04","page_type":"category_listing","category_id":"cat_007","view_duration":67},
+  {"timestamp":"2025-03-12T14:39:11","page_type":"product_detail","product_id":"prod_00123","category_id":"cat_007","view_duration":124},
+  {"timestamp":"2025-03-12T14:41:15","page_type":"cart","view_duration":56}]'
+
+put 'sessions', 'sess_a7b3c9d8e2', 'activity:cart_contents',
+'{"prod_00123":{"quantity":2,"price":129.99}}'
+
+get 'sessions', 'sess_a7b3c9d8e2'
+
+
+################################################################################
+# 12. TRANSACTIONS TABLE
+################################################################################
+
+create 'transactions',
+  { NAME => 'meta' },
+  { NAME => 'financials' },
+  { NAME => 'items' }
+
+describe 'transactions'
+
+# Transaction 1
+put 'transactions', 'txn_c8d9e7f3a2b1', 'meta:user_id', 'user_000042'
+put 'transactions', 'txn_c8d9e7f3a2b1', 'meta:session_id', 'sess_a7b3c9d8e2'
+put 'transactions', 'txn_c8d9e7f3a2b1', 'meta:timestamp', '2025-03-12T14:52:41'
+put 'transactions', 'txn_c8d9e7f3a2b1', 'meta:payment_method', 'credit_card'
+put 'transactions', 'txn_c8d9e7f3a2b1', 'meta:status', 'completed'
+
+put 'transactions', 'txn_c8d9e7f3a2b1', 'financials:subtotal', '259.98'
+put 'transactions', 'txn_c8d9e7f3a2b1', 'financials:discount', '25.99'
+put 'transactions', 'txn_c8d9e7f3a2b1', 'financials:total', '233.99'
+
+put 'transactions', 'txn_c8d9e7f3a2b1', 'items:list',
+'[{"product_id":"prod_00123","quantity":2,"unit_price":129.99,"subtotal":259.98}]'
+
+# Transaction 2
+put 'transactions', 'txn_a1b2c3d4e5f6', 'meta:user_id', 'user_000173'
+put 'transactions', 'txn_a1b2c3d4e5f6', 'meta:timestamp', '2025-04-01T18:27:15'
+put 'transactions', 'txn_a1b2c3d4e5f6', 'meta:payment_method', 'paypal'
+put 'transactions', 'txn_a1b2c3d4e5f6', 'meta:status', 'shipped'
+
+put 'transactions', 'txn_a1b2c3d4e5f6', 'financials:subtotal', '97.49'
+put 'transactions', 'txn_a1b2c3d4e5f6', 'financials:discount', '0.00'
+put 'transactions', 'txn_a1b2c3d4e5f6', 'financials:total', '97.49'
+
+put 'transactions', 'txn_a1b2c3d4e5f6', 'items:list',
+'[{"product_id":"prod_04837","quantity":1,"unit_price":59.99,"subtotal":59.99},
+  {"product_id":"prod_01287","quantity":3,"unit_price":12.50,"subtotal":37.50}]'
+
+# Verify transactions
+get 'transactions', 'txn_c8d9e7f3a2b1'
+get 'transactions', 'txn_a1b2c3d4e5f6'
+
+
+################################################################################
+# END OF HBASE FINAL PROJECT SCRIPT
+################################################################################
